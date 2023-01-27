@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33122.133
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisBackupMinimalCli", "RedisBackupMinimalCli\RedisBackupMinimalCli.csproj", "{A2B2AC21-6EC3-4F8F-A5A9-0FBAF0819084}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisBackupMinimalCli.Tests", "RedisBackupMinimalCli.Tests\RedisBackupMinimalCli.Tests.csproj", "{871D6F0D-AE0F-418D-BDB4-485B82FB2D98}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisBackupMinimalCli", "RedisBackupMinimalCli\RedisBackupMinimalCli.csproj", "{12F8F357-1886-437D-9C49-89DDA179D69C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A2B2AC21-6EC3-4F8F-A5A9-0FBAF0819084}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A2B2AC21-6EC3-4F8F-A5A9-0FBAF0819084}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A2B2AC21-6EC3-4F8F-A5A9-0FBAF0819084}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A2B2AC21-6EC3-4F8F-A5A9-0FBAF0819084}.Release|Any CPU.Build.0 = Release|Any CPU
+		{871D6F0D-AE0F-418D-BDB4-485B82FB2D98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{871D6F0D-AE0F-418D-BDB4-485B82FB2D98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{871D6F0D-AE0F-418D-BDB4-485B82FB2D98}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{871D6F0D-AE0F-418D-BDB4-485B82FB2D98}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12F8F357-1886-437D-9C49-89DDA179D69C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12F8F357-1886-437D-9C49-89DDA179D69C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12F8F357-1886-437D-9C49-89DDA179D69C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12F8F357-1886-437D-9C49-89DDA179D69C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
