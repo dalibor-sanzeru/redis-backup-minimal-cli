@@ -9,7 +9,7 @@ namespace RedisBackupMinimalCli.Tests
         [Fact]
         public void BackupManager_Ctor()
         {
-            var bm = new BackupManager();
+            var bm = new CliManager();
             bm.Should().NotBeNull();
         }
 
@@ -19,12 +19,12 @@ namespace RedisBackupMinimalCli.Tests
             var opt = new Options()
             {
                 Directory = ".",
-                Operation = OperationType.Restore,
+                Operation = OperationType.Backup,
                 Redis = "localhost:6379",
                 Keys = new List<string>
                 {"TestDb:*"}
             };
-            var bm = new BackupManager();
+            var bm = new CliManager();
             await bm.Execute(opt);
         }
 
@@ -34,12 +34,12 @@ namespace RedisBackupMinimalCli.Tests
             var opt = new Options()
             {
                 Directory = ".",
-                Operation = OperationType.Restore,
+                Operation = OperationType.Backup,
                 Redis = "localhost:6379",
                 Keys = new List<string>
                 {"TestDb:Hashes:*"}
             };
-            var bm = new BackupManager();
+            var bm = new CliManager();
             await bm.Execute(opt);
         }
 
@@ -49,12 +49,12 @@ namespace RedisBackupMinimalCli.Tests
             var opt = new Options()
             {
                 Directory = ".",
-                Operation = OperationType.Restore,
+                Operation = OperationType.Backup,
                 Redis = "localhost:6379",
                 Keys = new List<string>
                 {"TestDb:Sets:*"}
             };
-            var bm = new BackupManager();
+            var bm = new CliManager();
             await bm.Execute(opt);
         }
 
@@ -64,12 +64,12 @@ namespace RedisBackupMinimalCli.Tests
             var opt = new Options()
             {
                 Directory = ".",
-                Operation = OperationType.Restore,
+                Operation = OperationType.Backup,
                 Redis = "localhost:6379",
                 Keys = new List<string>
                 {"TestDb:SortedSets:*"}
             };
-            var bm = new BackupManager();
+            var bm = new CliManager();
             await bm.Execute(opt);
         }
 
@@ -79,12 +79,12 @@ namespace RedisBackupMinimalCli.Tests
             var opt = new Options()
             {
                 Directory = ".",
-                Operation = OperationType.Restore,
+                Operation = OperationType.Backup,
                 Redis = "localhost:6379",
                 Keys = new List<string>
                 {"TestDb:Streams:*"}
             };
-            var bm = new BackupManager();
+            var bm = new CliManager();
             await bm.Execute(opt);
         }
     }

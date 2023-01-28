@@ -2,51 +2,19 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RedisBackupMinimalCli
+namespace RedisBackupMinimalCli.Creators
 {
-    public class BackupManager
+    public class BackupCreator : CreatorBase
     {
-        public BackupManager()
+        public BackupCreator(IServer server, IDatabase database) : base(server, database)
         {
         }
 
-        public async Task Execute(Options options)
+        public override async Task Execute(Options options)
         {
-            switch (options.Operation)
-            {
-                case OperationType.Backup:
-                    await this.ExecuteBackup(options);
-                    break;
-                case OperationType.Restore:
-                    await this.ExecuteRestore(options);
-                    break;
-                default:
-                    throw new InvalidOperationException($"Operation {options.Operation} not yet supported.");
-            }
-        }
-
-        private (IServer server, IDatabase database) ConnectToRedis(string redisConnection)
-        {
-            ConnectionMultiplexer client = ConnectionMultiplexer.Connect(redisConnection);
-            var server = client.GetServer(redisConnection);
-            var database = client.GetDatabase();
-
-            return (server, database);
-        }
-
-        private async Task ExecuteBackup(Options options)
-        {
-        }
-
-        private async Task ExecuteRestore(Options options)
-        {
-            (IServer server, IDatabase database) = this.ConnectToRedis(options.Redis);
-
             //get keys with datatypes
             var batch = database.CreateBatch();
             var allKeys = options.Keys.SelectMany(k => server.Keys(pattern: k));
@@ -58,11 +26,11 @@ namespace RedisBackupMinimalCli
                                  .Select(x => new { RedisType = x.Key, Keys = x.Select(x => x.Key).ToList() })
                                  .ToList();
 
-            List<Task<RedisValue>> keyResults = new List<Task<RedisValue>>();
+            List<Task<RedisValue>> stringResults = new List<Task<RedisValue>>();
+            List<Task<RedisValue[]>> listResults = new List<Task<RedisValue[]>>();
             List<Task<HashEntry[]>> hashResults = new List<Task<HashEntry[]>>();
             List<Task<RedisValue[]>> setResults = new List<Task<RedisValue[]>>();
             List<Task<SortedSetEntry[]>> sortedSetResults = new List<Task<SortedSetEntry[]>>();
-            List<Task<RedisValue[]>> listResults = new List<Task<RedisValue[]>>();
             List<Task<StreamEntry[]>> streamResults = new List<Task<StreamEntry[]>>();
 
             batch = database.CreateBatch();
@@ -71,7 +39,7 @@ namespace RedisBackupMinimalCli
                 switch (keysPerType.RedisType)
                 {
                     case RedisType.String:
-                        keyResults = keysPerType.Keys.Select(individualKey => batch.StringGetAsync(individualKey)).ToList();
+                        stringResults = keysPerType.Keys.Select(individualKey => batch.StringGetAsync(individualKey)).ToList();
                         break;
                     case RedisType.List:
                         listResults = keysPerType.Keys.Select(individualKey => batch.ListRangeAsync(individualKey)).ToList();
@@ -96,7 +64,8 @@ namespace RedisBackupMinimalCli
             });
 
             batch.Execute();
-            await Task.WhenAll(keyResults);
+
+            await Task.WhenAll(stringResults);
             await Task.WhenAll(hashResults);
             await Task.WhenAll(setResults);
             await Task.WhenAll(sortedSetResults);

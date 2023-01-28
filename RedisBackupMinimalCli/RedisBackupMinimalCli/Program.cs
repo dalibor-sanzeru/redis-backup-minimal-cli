@@ -10,7 +10,7 @@ namespace RedisBackupMinimalCli
             return Parser.Default.ParseArguments<Options>(args)
                     .WithParsedAsync<Options>(o =>
                     {
-                        var m = new BackupManager();
+                        var m = new CliManager();
                         return m.Execute(o);
                     });
         }
