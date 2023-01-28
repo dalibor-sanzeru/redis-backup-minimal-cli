@@ -53,6 +53,55 @@ namespace RedisBackupMinimalCli
             var keysWithTypes = allKeys.ToDictionary(k => k.ToString(), k => batch.KeyTypeAsync(k));
             batch.Execute();
             await Task.WhenAll(keysWithTypes.Values);
+            var redisTypeKeys = keysWithTypes
+                                 .GroupBy(x => x.Value.Result)
+                                 .Select(x => new { RedisType = x.Key, Keys = x.Select(x => x.Key).ToList() })
+                                 .ToList();
+
+            List<Task<RedisValue>> keyResults = new List<Task<RedisValue>>();
+            List<Task<HashEntry[]>> hashResults = new List<Task<HashEntry[]>>();
+            List<Task<RedisValue[]>> setResults = new List<Task<RedisValue[]>>();
+            List<Task<SortedSetEntry[]>> sortedSetResults = new List<Task<SortedSetEntry[]>>();
+            List<Task<RedisValue[]>> listResults = new List<Task<RedisValue[]>>();
+            List<Task<StreamEntry[]>> streamResults = new List<Task<StreamEntry[]>>();
+
+            batch = database.CreateBatch();
+            redisTypeKeys.ForEach(keysPerType =>
+            {
+                switch (keysPerType.RedisType)
+                {
+                    case RedisType.String:
+                        keyResults = keysPerType.Keys.Select(individualKey => batch.StringGetAsync(individualKey)).ToList();
+                        break;
+                    case RedisType.List:
+                        listResults = keysPerType.Keys.Select(individualKey => batch.ListRangeAsync(individualKey)).ToList();
+                        break;
+                    case RedisType.Set:
+                        setResults = keysPerType.Keys.Select(individualKey => batch.SetMembersAsync(individualKey)).ToList();
+                        break;
+                    case RedisType.SortedSet:
+                        sortedSetResults = keysPerType.Keys.Select(individualKey => batch.SortedSetRangeByRankWithScoresAsync(individualKey)).ToList();
+                        break;
+                    case RedisType.Hash:
+                        hashResults = keysPerType.Keys.Select(individualKey => batch.HashGetAllAsync(individualKey)).ToList();
+                        break;
+                    case RedisType.Stream:
+                        streamResults = keysPerType.Keys.Select(individualKey => batch.StreamRangeAsync(individualKey)).ToList();
+                        break;
+                    case RedisType.None:
+                    case RedisType.Unknown:
+                    default:
+                        throw new InvalidOperationException($"Type {keysPerType.RedisType} cannot be processed.");
+                }
+            });
+
+            batch.Execute();
+            await Task.WhenAll(keyResults);
+            await Task.WhenAll(hashResults);
+            await Task.WhenAll(setResults);
+            await Task.WhenAll(sortedSetResults);
+            await Task.WhenAll(listResults);
+            await Task.WhenAll(streamResults);
         }
     }
 }
