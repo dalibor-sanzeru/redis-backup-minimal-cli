@@ -14,12 +14,12 @@ namespace RedisBackupMinimalCli.Serialization
             List<string> result = new List<string>();
             for (int i = 0; i < items.Count; i++)
             {
-                result.Add(SerializeItem(items[i]));
+                result.AddRange(SerializeItem(items[i]));
             }
 
             return result;
         }
 
-        protected abstract string SerializeItem(KeyValuePair<string, ItemsType> item);
+        protected abstract List<string> SerializeItem(KeyValuePair<string, ItemsType> item);
     }
 }

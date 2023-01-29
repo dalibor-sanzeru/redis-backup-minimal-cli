@@ -12,7 +12,7 @@ namespace RedisBackupMinimalCli.Creators
         protected readonly IDatabase database;
         protected readonly IServer server;
 
-        public CreatorBase(IServer server, IDatabase database)
+        protected CreatorBase(IServer server, IDatabase database)
         {
             this.server = server;
             this.database = database;

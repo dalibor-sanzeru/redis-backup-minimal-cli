@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace RedisBackupMinimalCli.Serialization
 {
-    public class StringsSerializer : ItemsSerializerBase<RedisValue>
+    public class ListsSerializer : ItemsSerializerBase<RedisValue[]>
     {
-        protected override List<string> SerializeItem(KeyValuePair<string, RedisValue> item)
+        protected override List<string> SerializeItem(KeyValuePair<string, RedisValue[]> item)
         {
-            return new List<string>() { $"SET {item.Key} {item.Value}" };
+            throw new NotImplementedException();
         }
     }
 }

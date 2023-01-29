@@ -1,7 +1,10 @@
-﻿using StackExchange.Redis;
+﻿using RedisBackupMinimalCli.Serialization;
+using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -15,62 +18,70 @@ namespace RedisBackupMinimalCli.Creators
 
         public override async Task Execute(Options options)
         {
-            //get keys with datatypes
-            var batch = database.CreateBatch();
-            var allKeys = options.Keys.SelectMany(k => server.Keys(pattern: k));
-            var keysWithTypes = allKeys.ToDictionary(k => k.ToString(), k => batch.KeyTypeAsync(k));
-            batch.Execute();
-            await Task.WhenAll(keysWithTypes.Values);
-            var redisTypeKeys = keysWithTypes
-                                 .GroupBy(x => x.Value.Result)
-                                 .Select(x => new { RedisType = x.Key, Keys = x.Select(x => x.Key).ToList() })
-                                 .ToList();
+            var redisTypeKeys = this.LoadKeysInBatchMode(options.Keys);
 
-            List<Task<RedisValue>> stringResults = new List<Task<RedisValue>>();
-            List<Task<RedisValue[]>> listResults = new List<Task<RedisValue[]>>();
-            List<Task<HashEntry[]>> hashResults = new List<Task<HashEntry[]>>();
-            List<Task<RedisValue[]>> setResults = new List<Task<RedisValue[]>>();
-            List<Task<SortedSetEntry[]>> sortedSetResults = new List<Task<SortedSetEntry[]>>();
-            List<Task<StreamEntry[]>> streamResults = new List<Task<StreamEntry[]>>();
-
-            batch = database.CreateBatch();
-            redisTypeKeys.ForEach(keysPerType =>
+            redisTypeKeys.Result.ForEach(async keysPerType =>
             {
-                switch (keysPerType.RedisType)
+                switch (keysPerType.Type)
                 {
                     case RedisType.String:
-                        stringResults = keysPerType.Keys.Select(individualKey => batch.StringGetAsync(individualKey)).ToList();
+                        var stringResults = await ExtractInBatchMode((batch) => keysPerType.Keys.Select(individualKey => new KeyValuePair<string, Task<RedisValue>>(individualKey, batch.StringGetAsync(individualKey))));
+                        var s = new StringsSerializer();
+                        var r = s.Serialize(stringResults);
                         break;
                     case RedisType.List:
-                        listResults = keysPerType.Keys.Select(individualKey => batch.ListRangeAsync(individualKey)).ToList();
+                        var listResults = await ExtractInBatchMode((batch) => keysPerType.Keys.Select(individualKey => new KeyValuePair<string, Task<RedisValue[]>>(individualKey, batch.ListRangeAsync(individualKey))));
+                        var ss = new ListsSerializer();
+                        var re = ss.Serialize(listResults);
                         break;
                     case RedisType.Set:
-                        setResults = keysPerType.Keys.Select(individualKey => batch.SetMembersAsync(individualKey)).ToList();
+                        var setResults = await ExtractInBatchMode((batch) => keysPerType.Keys.Select(individualKey => new KeyValuePair<string, Task<RedisValue[]>>(individualKey, batch.SetMembersAsync(individualKey))));
                         break;
                     case RedisType.SortedSet:
-                        sortedSetResults = keysPerType.Keys.Select(individualKey => batch.SortedSetRangeByRankWithScoresAsync(individualKey)).ToList();
+                        var sortedSetResults = await ExtractInBatchMode((batch) => keysPerType.Keys.Select(individualKey => new KeyValuePair<string, Task<SortedSetEntry[]>>(individualKey, batch.SortedSetRangeByRankWithScoresAsync(individualKey))));
                         break;
                     case RedisType.Hash:
-                        hashResults = keysPerType.Keys.Select(individualKey => batch.HashGetAllAsync(individualKey)).ToList();
+                        var hashResults = await ExtractInBatchMode((batch) => keysPerType.Keys.Select(individualKey => new KeyValuePair<string, Task<HashEntry[]>>(individualKey, batch.HashGetAllAsync(individualKey))));
                         break;
                     case RedisType.Stream:
-                        streamResults = keysPerType.Keys.Select(individualKey => batch.StreamRangeAsync(individualKey)).ToList();
+                        var streamResults = await ExtractInBatchMode((batch) => keysPerType.Keys.Select(individualKey => new KeyValuePair<string, Task<StreamEntry[]>>(individualKey, batch.StreamRangeAsync(individualKey))));
                         break;
                     case RedisType.None:
                     case RedisType.Unknown:
                     default:
-                        throw new InvalidOperationException($"Type {keysPerType.RedisType} cannot be processed.");
+                        throw new InvalidOperationException($"Type {keysPerType.Type} cannot be processed.");
                 }
             });
+        }
+
+        private async Task<List<(RedisType Type, List<string> Keys)>> LoadKeysInBatchMode(IEnumerable<string> keyPatterns)
+        {
+            var batch = database.CreateBatch();
+            var allKeys = keyPatterns.SelectMany(k => server.Keys(pattern: k));
+            var keysWithTypes = allKeys.ToDictionary(k => k.ToString(), k => batch.KeyTypeAsync(k));
+            batch.Execute();
+
+            await Task.WhenAll(keysWithTypes.Values);
+            var redisTypeKeys = keysWithTypes
+                                 .GroupBy(x => x.Value.Result)
+                                 .Select(x => (type: x.Key, keys: x.Select(x => x.Key).ToList()))
+                                 .ToList();
+
+            return redisTypeKeys;
+        }
+
+        private async Task<List<KeyValuePair<string, T>>> ExtractInBatchMode<T>(Func<IBatch, IEnumerable<KeyValuePair<string, Task<T>>>> dbExtractor)
+        {
+            var batch = database.CreateBatch();
+
+            var results = dbExtractor(batch);
+
 
             batch.Execute();
 
-            await Task.WhenAll(stringResults);
-            await Task.WhenAll(hashResults);
-            await Task.WhenAll(setResults);
-            await Task.WhenAll(sortedSetResults);
-            await Task.WhenAll(listResults);
-            await Task.WhenAll(streamResults);
+            await Task.WhenAll(results.Select(x => x.Value));
+
+            return results.Select(x => new KeyValuePair<string, T>(x.Key, x.Value.Result)).ToList();
         }
     }
 }
