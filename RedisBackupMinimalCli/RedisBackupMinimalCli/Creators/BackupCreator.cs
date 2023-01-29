@@ -1,4 +1,5 @@
-﻿using RedisBackupMinimalCli.Serialization;
+﻿using RedisBackupMinimalCli.FileSystemOperations;
+using RedisBackupMinimalCli.Serialization;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -12,46 +13,55 @@ namespace RedisBackupMinimalCli.Creators
 {
     public class BackupCreator : CreatorBase
     {
-        public BackupCreator(IServer server, IDatabase database) : base(server, database)
+        private readonly IBackupSaver backupSaver;
+        private readonly IRedisTypeSerializer redisTypeSerializer;
+
+        public BackupCreator(IServer server, IDatabase database, IRedisTypeSerializer redisTypeSerializer, IBackupSaver backupSaver) : base(server, database)
         {
+            this.backupSaver = backupSaver;
+            this.redisTypeSerializer = redisTypeSerializer;
         }
 
         public override async Task Execute(Options options)
         {
-            var redisTypeKeys = this.LoadKeysInBatchMode(options.Keys);
+            var redisTypeKeys = await this.LoadKeysInBatchMode(options.Keys);
 
-            redisTypeKeys.Result.ForEach(async keysPerType =>
+            foreach (var keysPerType in redisTypeKeys)
             {
+                List<string> serializedCommads = null;
                 switch (keysPerType.Type)
                 {
                     case RedisType.String:
-                        var stringResults = await ExtractInBatchMode((batch) => keysPerType.Keys.Select(individualKey => new KeyValuePair<string, Task<RedisValue>>(individualKey, batch.StringGetAsync(individualKey))));
-                        var s = new StringsSerializer();
-                        var r = s.Serialize(stringResults);
+                        var stringResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.StringGetAsync(individualKey));
+                        serializedCommads = this.redisTypeSerializer.SerializeStrings(stringResults);
                         break;
                     case RedisType.List:
-                        var listResults = await ExtractInBatchMode((batch) => keysPerType.Keys.Select(individualKey => new KeyValuePair<string, Task<RedisValue[]>>(individualKey, batch.ListRangeAsync(individualKey))));
-                        var ss = new ListsSerializer();
-                        var re = ss.Serialize(listResults);
+                        var listResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.ListRangeAsync(individualKey));
+                        serializedCommads = this.redisTypeSerializer.SerializeLists(listResults);
                         break;
                     case RedisType.Set:
-                        var setResults = await ExtractInBatchMode((batch) => keysPerType.Keys.Select(individualKey => new KeyValuePair<string, Task<RedisValue[]>>(individualKey, batch.SetMembersAsync(individualKey))));
+                        var setResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.SetMembersAsync(individualKey));
+                        serializedCommads = this.redisTypeSerializer.SerializeSets(setResults);
                         break;
                     case RedisType.SortedSet:
-                        var sortedSetResults = await ExtractInBatchMode((batch) => keysPerType.Keys.Select(individualKey => new KeyValuePair<string, Task<SortedSetEntry[]>>(individualKey, batch.SortedSetRangeByRankWithScoresAsync(individualKey))));
+                        var sortedSetResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.SortedSetRangeByRankWithScoresAsync(individualKey));
+                        serializedCommads = this.redisTypeSerializer.SerializeSortedSets(sortedSetResults);
                         break;
                     case RedisType.Hash:
-                        var hashResults = await ExtractInBatchMode((batch) => keysPerType.Keys.Select(individualKey => new KeyValuePair<string, Task<HashEntry[]>>(individualKey, batch.HashGetAllAsync(individualKey))));
+                        var hashResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.HashGetAllAsync(individualKey));
+                        serializedCommads =  this.redisTypeSerializer.SerializeHashSets(hashResults);
                         break;
                     case RedisType.Stream:
-                        var streamResults = await ExtractInBatchMode((batch) => keysPerType.Keys.Select(individualKey => new KeyValuePair<string, Task<StreamEntry[]>>(individualKey, batch.StreamRangeAsync(individualKey))));
+                        var streamResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.StreamRangeAsync(individualKey));
+                        serializedCommads = this.redisTypeSerializer.SerializeStreams(streamResults);
                         break;
                     case RedisType.None:
                     case RedisType.Unknown:
                     default:
                         throw new InvalidOperationException($"Type {keysPerType.Type} cannot be processed.");
                 }
-            });
+                await backupSaver.Save(options.Directory, serializedCommads);
+            }
         }
 
         private async Task<List<(RedisType Type, List<string> Keys)>> LoadKeysInBatchMode(IEnumerable<string> keyPatterns)
@@ -70,13 +80,10 @@ namespace RedisBackupMinimalCli.Creators
             return redisTypeKeys;
         }
 
-        private async Task<List<KeyValuePair<string, T>>> ExtractInBatchMode<T>(Func<IBatch, IEnumerable<KeyValuePair<string, Task<T>>>> dbExtractor)
+        private async Task<List<KeyValuePair<string, T>>> LoadAndExtract<T>(List<string> keysPerType, Func<IBatch, string, Task<T>> dbExtractor)
         {
             var batch = database.CreateBatch();
-
-            var results = dbExtractor(batch);
-
-
+            var results = keysPerType.Select(individualKey => new KeyValuePair<string, Task<T>>(individualKey, dbExtractor(batch, individualKey))).ToList();
             batch.Execute();
 
             await Task.WhenAll(results.Select(x => x.Value));

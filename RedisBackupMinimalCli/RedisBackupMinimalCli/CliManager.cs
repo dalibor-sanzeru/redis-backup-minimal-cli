@@ -1,4 +1,6 @@
 ﻿using RedisBackupMinimalCli.Creators;
+using RedisBackupMinimalCli.FileSystemOperations;
+using RedisBackupMinimalCli.Serialization;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -12,18 +14,16 @@ namespace RedisBackupMinimalCli
 {
     public class CliManager
     {
-        public CliManager()
-        {
-        }
-
         public async Task Execute(Options options)
         {
             var (server, database) = ConnectToRedis(options.Redis);
+            var creatorSaver = new FileBackupSaver();
+            var redisTypeSerializer = new RedisTypeSerializer();
 
             switch (options.Operation)
             {
                 case OperationType.Backup:
-                    await new BackupCreator(server, database).Execute(options);
+                    await new BackupCreator(server, database, redisTypeSerializer, creatorSaver).Execute(options);
                     break;
                 case OperationType.Restore:
                     await new RestoreCreator(server, database).Execute(options);
