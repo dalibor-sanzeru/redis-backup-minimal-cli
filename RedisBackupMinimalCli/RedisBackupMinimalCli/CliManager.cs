@@ -16,9 +16,9 @@ namespace RedisBackupMinimalCli
     {
         public async Task Execute(Options options)
         {
-            var (server, database) = ConnectToRedis(options.Redis);
-            var creatorSaver = new FileBackupSaver();
-            var redisTypeSerializer = new RedisTypeSerializer();
+            var (server, database) = CreateDatabaseConnection(options.Redis);
+            var creatorSaver = this.CreateBackupSaver();
+            var redisTypeSerializer = CreateRedisTypeSerializer();
 
             switch (options.Operation)
             {
@@ -33,13 +33,23 @@ namespace RedisBackupMinimalCli
             }
         }
 
-        private (IServer server, IDatabase database) ConnectToRedis(string redisConnection)
+        protected virtual (IServer server, IDatabase database) CreateDatabaseConnection(string redisConnection)
         {
             ConnectionMultiplexer client = ConnectionMultiplexer.Connect(redisConnection);
             var server = client.GetServer(redisConnection);
             var database = client.GetDatabase();
 
             return (server, database);
+        }
+
+        protected virtual IBackupSaver CreateBackupSaver()
+        {
+            return new FileBackupSaver();
+        }
+
+        protected virtual IRedisTypeSerializer CreateRedisTypeSerializer()
+        {
+            return new RedisTypeSerializer();
         }
     }
 }

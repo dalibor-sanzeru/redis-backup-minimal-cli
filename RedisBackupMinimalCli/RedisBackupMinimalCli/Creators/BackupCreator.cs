@@ -19,42 +19,42 @@ namespace RedisBackupMinimalCli.Creators
         {
             var redisTypeKeys = await this.LoadKeysInBatchMode(options.Keys);
 
+            List<string> serializedCommads = new();
             foreach (var keysPerType in redisTypeKeys)
             {
-                List<string> serializedCommads = null;
                 switch (keysPerType.Type)
                 {
                     case RedisType.String:
                         var stringResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.StringGetAsync(individualKey));
-                        serializedCommads = this.redisTypeSerializer.SerializeStrings(stringResults);
+                        serializedCommads.AddRange(this.redisTypeSerializer.SerializeStrings(stringResults));
                         break;
                     case RedisType.List:
                         var listResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.ListRangeAsync(individualKey));
-                        serializedCommads = this.redisTypeSerializer.SerializeLists(listResults);
+                        serializedCommads.AddRange(this.redisTypeSerializer.SerializeLists(listResults));
                         break;
                     case RedisType.Set:
                         var setResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.SetMembersAsync(individualKey));
-                        serializedCommads = this.redisTypeSerializer.SerializeSets(setResults);
+                        serializedCommads.AddRange(this.redisTypeSerializer.SerializeSets(setResults));
                         break;
                     case RedisType.SortedSet:
                         var sortedSetResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.SortedSetRangeByRankWithScoresAsync(individualKey));
-                        serializedCommads = this.redisTypeSerializer.SerializeSortedSets(sortedSetResults);
+                        serializedCommads.AddRange(this.redisTypeSerializer.SerializeSortedSets(sortedSetResults));
                         break;
                     case RedisType.Hash:
                         var hashResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.HashGetAllAsync(individualKey));
-                        serializedCommads =  this.redisTypeSerializer.SerializeHashSets(hashResults);
+                        serializedCommads.AddRange(this.redisTypeSerializer.SerializeHashSets(hashResults));
                         break;
                     case RedisType.Stream:
                         var streamResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.StreamRangeAsync(individualKey));
-                        serializedCommads = this.redisTypeSerializer.SerializeStreams(streamResults);
+                        serializedCommads.AddRange(this.redisTypeSerializer.SerializeStreams(streamResults));
                         break;
                     case RedisType.None:
                     case RedisType.Unknown:
                     default:
                         throw new InvalidOperationException($"Type {keysPerType.Type} cannot be processed.");
                 }
-                await backupSaver.Save(options.Directory, keysPerType.Type.ToString(), serializedCommads);
             }
+            await backupSaver.Save(options.Directory, options.FileName, serializedCommads);
         }
 
         private async Task<List<(RedisType Type, List<string> Keys)>> LoadKeysInBatchMode(IEnumerable<string> keyPatterns)

@@ -10,6 +10,13 @@ namespace RedisBackupMinimalCli.Tests
 {
     public class BackupCreatorTests
     {
+        public static List<string> SourceTestData { get; private set; }
+
+        static BackupCreatorTests()
+        {
+            SourceTestData = File.ReadAllLines("redis-test-data.txt").ToList();
+        }
+
         private static BackupCreator CreateBackupCreator(IServer server = null, IDatabase database = null, IRedisTypeSerializer rts = null, IBackupSaver bs = null)
         {
             var dbMock = new Mock<IDatabase>();
@@ -45,7 +52,7 @@ namespace RedisBackupMinimalCli.Tests
 
             var bm = CreateBackupCreator(redis.GetServer(opt.Redis), redis.GetDatabase(), new RedisTypeSerializer(), bs.Object);
             await bm.Execute(opt);
-            bs.Verify(x => x.Save(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count >= 2)), Times.Exactly(5));
+            bs.Verify(x => x.Save(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count >= 2)), Times.Exactly(1));
         }
 
         [Fact]

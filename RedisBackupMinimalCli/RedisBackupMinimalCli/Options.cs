@@ -15,5 +15,8 @@ namespace RedisBackupMinimalCli
 
         [Option("keys", Required = false, HelpText = "Keys to backup.")]
         public IEnumerable<string> Keys { get; set; }
+
+        [Option("filename", Required = false, HelpText = "File name to create(backup)/read(restore).")]
+        public string FileName { get; set; }
     }
 }

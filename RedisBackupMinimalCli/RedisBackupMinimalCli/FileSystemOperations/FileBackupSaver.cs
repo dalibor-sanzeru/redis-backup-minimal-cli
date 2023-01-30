@@ -10,14 +10,17 @@ namespace RedisBackupMinimalCli.FileSystemOperations
     {
         private readonly string fileSuffix;
 
-        public FileBackupSaver(string fileSuffix = "redis") 
+        public FileBackupSaver(string fileSuffix = "redis")
         {
             this.fileSuffix = fileSuffix;
         }
 
-        public Task Save(string directory, string fileName, List<string> results)
+        public Task Save(string directory, string fileName, List<string> serializedCommads)
         {
-            return File.WriteAllLinesAsync(Path.Combine(directory, $"{fileName}.{fileSuffix}"), results);
+            var defaultName = $"{DateTime.UtcNow.ToString("MMddyy_HHmmss")}.redis" ;
+            var path = Path.Combine(directory, $"{fileName ?? defaultName}");
+
+            return File.WriteAllLinesAsync(path, serializedCommads);
         }
     }
 }
