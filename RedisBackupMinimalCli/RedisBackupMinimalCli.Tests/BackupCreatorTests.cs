@@ -2,7 +2,7 @@ using FluentAssertions;
 using Microsoft.VisualStudio.TestPlatform.TestHost;
 using Moq;
 using RedisBackupMinimalCli.Creators;
-using RedisBackupMinimalCli.FileSystemOperations;
+using RedisBackupMinimalCli.PersistanceOperations;
 using RedisBackupMinimalCli.Serialization;
 using StackExchange.Redis;
 
@@ -17,12 +17,12 @@ namespace RedisBackupMinimalCli.Tests
             SourceTestData = File.ReadAllLines("redis-test-data.txt").ToList();
         }
 
-        private static BackupCreator CreateBackupCreator(IServer server = null, IDatabase database = null, IRedisTypeSerializer rts = null, IBackupSaver bs = null)
+        private static BackupCreator CreateBackupCreator(IServer server = null, IDatabase database = null, IRedisTypeSerializer rts = null, ICommandPersistanceHandler bs = null)
         {
             var dbMock = new Mock<IDatabase>();
             var serverMock = new Mock<IServer>();
             var redisTypeSerializer = new Mock<IRedisTypeSerializer>();
-            var backupSaver = new Mock<IBackupSaver>();
+            var backupSaver = new Mock<ICommandPersistanceHandler>();
 
             var bm = new BackupCreator(server ?? serverMock.Object, database ?? dbMock.Object, rts ?? redisTypeSerializer.Object, bs ?? backupSaver.Object);
             return bm;
@@ -48,11 +48,11 @@ namespace RedisBackupMinimalCli.Tests
             };
 
             var redis = ConnectionMultiplexer.Connect(opt.Redis);
-            var bs = new Mock<IBackupSaver>();
+            var bs = new Mock<ICommandPersistanceHandler>();
 
             var bm = CreateBackupCreator(redis.GetServer(opt.Redis), redis.GetDatabase(), new RedisTypeSerializer(), bs.Object);
             await bm.Execute(opt);
-            bs.Verify(x => x.Save(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count >= 2)), Times.Exactly(1));
+            bs.Verify(x => x.SaveCommands(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count >= 2)), Times.Exactly(1));
         }
 
         [Fact]
@@ -68,12 +68,12 @@ namespace RedisBackupMinimalCli.Tests
             };
 
             var redis = ConnectionMultiplexer.Connect(opt.Redis);
-            var bs = new Mock<IBackupSaver>();
+            var bs = new Mock<ICommandPersistanceHandler>();
 
             var bm = CreateBackupCreator(redis.GetServer(opt.Redis), redis.GetDatabase(), new RedisTypeSerializer(), bs.Object);
             await bm.Execute(opt);
 
-            bs.Verify(x => x.Save(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count == 4)), Times.Once());
+            bs.Verify(x => x.SaveCommands(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count == 4)), Times.Once());
         }
 
         [Fact]
@@ -89,12 +89,12 @@ namespace RedisBackupMinimalCli.Tests
             };
 
             var redis = ConnectionMultiplexer.Connect(opt.Redis);
-            var bs = new Mock<IBackupSaver>();
+            var bs = new Mock<ICommandPersistanceHandler>();
 
             var bm = CreateBackupCreator(redis.GetServer(opt.Redis), redis.GetDatabase(), new RedisTypeSerializer(), bs.Object);
             await bm.Execute(opt);
 
-            bs.Verify(x => x.Save(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count == 2)), Times.Once());
+            bs.Verify(x => x.SaveCommands(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count == 2)), Times.Once());
         }
 
         [Fact]
@@ -110,12 +110,12 @@ namespace RedisBackupMinimalCli.Tests
             };
 
             var redis = ConnectionMultiplexer.Connect(opt.Redis);
-            var bs = new Mock<IBackupSaver>();
+            var bs = new Mock<ICommandPersistanceHandler>();
 
             var bm = CreateBackupCreator(redis.GetServer(opt.Redis), redis.GetDatabase(), new RedisTypeSerializer(), bs.Object);
             await bm.Execute(opt);
 
-            bs.Verify(x => x.Save(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count == 4)), Times.Once());
+            bs.Verify(x => x.SaveCommands(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count == 4)), Times.Once());
         }
 
         [Fact]
@@ -131,12 +131,12 @@ namespace RedisBackupMinimalCli.Tests
             };
 
             var redis = ConnectionMultiplexer.Connect(opt.Redis);
-            var bs = new Mock<IBackupSaver>();
+            var bs = new Mock<ICommandPersistanceHandler>();
 
             var bm = CreateBackupCreator(redis.GetServer(opt.Redis), redis.GetDatabase(), new RedisTypeSerializer(), bs.Object);
             await bm.Execute(opt);
 
-            bs.Verify(x => x.Save(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count == 4)), Times.Once());
+            bs.Verify(x => x.SaveCommands(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count == 4)), Times.Once());
         }
 
         [Fact(Skip = "Streams are not supported yet. Problem with local running stream commands on redis.")]
@@ -153,12 +153,12 @@ namespace RedisBackupMinimalCli.Tests
             };
 
             var redis = ConnectionMultiplexer.Connect(opt.Redis);
-            var bs = new Mock<IBackupSaver>();
+            var bs = new Mock<ICommandPersistanceHandler>();
 
             var bm = CreateBackupCreator(redis.GetServer(opt.Redis), redis.GetDatabase(), new RedisTypeSerializer(), bs.Object);
             await bm.Execute(opt);
 
-            bs.Verify(x => x.Save(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count == 2)), Times.Once());
+            bs.Verify(x => x.SaveCommands(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count == 2)), Times.Once());
         }
     }
 }

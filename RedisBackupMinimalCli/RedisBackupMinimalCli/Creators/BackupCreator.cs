@@ -1,4 +1,4 @@
-﻿using RedisBackupMinimalCli.FileSystemOperations;
+﻿using RedisBackupMinimalCli.PersistanceOperations;
 using RedisBackupMinimalCli.Serialization;
 using StackExchange.Redis;
 
@@ -6,10 +6,10 @@ namespace RedisBackupMinimalCli.Creators
 {
     public class BackupCreator : CreatorBase
     {
-        private readonly IBackupSaver backupSaver;
+        private readonly ICommandPersistanceHandler backupSaver;
         private readonly IRedisTypeSerializer redisTypeSerializer;
 
-        public BackupCreator(IServer server, IDatabase database, IRedisTypeSerializer redisTypeSerializer, IBackupSaver backupSaver) : base(server, database)
+        public BackupCreator(IServer server, IDatabase database, IRedisTypeSerializer redisTypeSerializer, ICommandPersistanceHandler backupSaver) : base(server, database)
         {
             this.backupSaver = backupSaver;
             this.redisTypeSerializer = redisTypeSerializer;
@@ -54,7 +54,7 @@ namespace RedisBackupMinimalCli.Creators
                         throw new InvalidOperationException($"Type {keysPerType.Type} cannot be processed.");
                 }
             }
-            await backupSaver.Save(options.Directory, options.FileName, serializedCommads);
+            await backupSaver.SaveCommands(options.Directory, options.FileName, serializedCommads);
         }
 
         private async Task<List<(RedisType Type, List<string> Keys)>> LoadKeysInBatchMode(IEnumerable<string> keyPatterns)

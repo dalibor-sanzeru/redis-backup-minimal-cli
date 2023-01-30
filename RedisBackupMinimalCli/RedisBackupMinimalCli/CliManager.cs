@@ -1,14 +1,7 @@
 ﻿using RedisBackupMinimalCli.Creators;
-using RedisBackupMinimalCli.FileSystemOperations;
+using RedisBackupMinimalCli.PersistanceOperations;
 using RedisBackupMinimalCli.Serialization;
 using StackExchange.Redis;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RedisBackupMinimalCli
 {
@@ -17,16 +10,16 @@ namespace RedisBackupMinimalCli
         public async Task Execute(Options options)
         {
             var (server, database) = CreateDatabaseConnection(options.Redis);
-            var creatorSaver = this.CreateBackupSaver();
+            var persistanceHandler = this.CreateCommandPersistanceHandler();
             var redisTypeSerializer = CreateRedisTypeSerializer();
 
             switch (options.Operation)
             {
                 case OperationType.Backup:
-                    await new BackupCreator(server, database, redisTypeSerializer, creatorSaver).Execute(options);
+                    await new BackupCreator(server, database, redisTypeSerializer, persistanceHandler).Execute(options);
                     break;
                 case OperationType.Restore:
-                    await new RestoreCreator(server, database).Execute(options);
+                    await new RestoreCreator(server, database, persistanceHandler).Execute(options);
                     break;
                 default:
                     throw new InvalidOperationException($"Operation {options.Operation} not yet supported.");
@@ -42,9 +35,9 @@ namespace RedisBackupMinimalCli
             return (server, database);
         }
 
-        protected virtual IBackupSaver CreateBackupSaver()
+        protected virtual ICommandPersistanceHandler CreateCommandPersistanceHandler()
         {
-            return new FileBackupSaver();
+            return new CommandFileHandler();
         }
 
         protected virtual IRedisTypeSerializer CreateRedisTypeSerializer()
