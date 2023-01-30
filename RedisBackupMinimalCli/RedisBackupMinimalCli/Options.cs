@@ -13,7 +13,7 @@ namespace RedisBackupMinimalCli
         [Option("directory", Required = true, HelpText = "Directory where backup/restore files are being stored.")]
         public string Directory { get; set; }
 
-        [Option("folder", Required = false, HelpText = "Keys to backup.")]
+        [Option("keys", Required = false, HelpText = "Keys to backup.")]
         public IEnumerable<string> Keys { get; set; }
     }
 }
