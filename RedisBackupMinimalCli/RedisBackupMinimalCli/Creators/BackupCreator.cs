@@ -1,13 +1,6 @@
 ﻿using RedisBackupMinimalCli.FileSystemOperations;
 using RedisBackupMinimalCli.Serialization;
 using StackExchange.Redis;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RedisBackupMinimalCli.Creators
 {
@@ -60,7 +53,7 @@ namespace RedisBackupMinimalCli.Creators
                     default:
                         throw new InvalidOperationException($"Type {keysPerType.Type} cannot be processed.");
                 }
-                await backupSaver.Save(options.Directory, serializedCommads);
+                await backupSaver.Save(options.Directory, keysPerType.Type.ToString(), serializedCommads);
             }
         }
 

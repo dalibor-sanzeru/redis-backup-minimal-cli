@@ -8,11 +8,16 @@ namespace RedisBackupMinimalCli.FileSystemOperations
 {
     public class FileBackupSaver : IBackupSaver
     {
-        public FileBackupSaver() { }
+        private readonly string fileSuffix;
 
-        public Task Save(string path, List<string> results)
+        public FileBackupSaver(string fileSuffix = "redis") 
         {
-            return File.WriteAllLinesAsync(path, results);
+            this.fileSuffix = fileSuffix;
+        }
+
+        public Task Save(string directory, string fileName, List<string> results)
+        {
+            return File.WriteAllLinesAsync(Path.Combine(directory, $"{fileName}.{fileSuffix}"), results);
         }
     }
 }
