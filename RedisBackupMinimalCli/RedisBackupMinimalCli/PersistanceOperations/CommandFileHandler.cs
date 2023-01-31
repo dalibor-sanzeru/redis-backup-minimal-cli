@@ -15,9 +15,9 @@ namespace RedisBackupMinimalCli.PersistanceOperations
             this.fileSuffix = fileSuffix;
         }
 
-        public async Task<IEnumerable<string>> LoadCommands(string fileName)
+        public async Task<List<string>> LoadCommands(string fileName)
         {
-            return await File.ReadAllLinesAsync(fileName);
+            return (await File.ReadAllLinesAsync(fileName)).ToList();
         }
 
         public Task SaveCommands(string directory, string fileName, List<string> serializedCommads)

@@ -18,7 +18,6 @@ namespace RedisBackupMinimalCli.Creators
             this.database = database;
         }
 
-
         public abstract Task Execute(Options options);
     }
 }

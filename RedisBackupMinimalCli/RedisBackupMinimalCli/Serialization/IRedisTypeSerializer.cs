@@ -9,9 +9,9 @@ namespace RedisBackupMinimalCli.Serialization
 {
     public interface IRedisTypeSerializer
     {
-        List<string> SerializeHashSets(List<KeyValuePair<string, HashEntry[]>> items);
-        
         List<string> SerializeStrings(List<KeyValuePair<string, RedisValue>> items);
+
+        List<string> SerializeHashSets(List<KeyValuePair<string, HashEntry[]>> items);
         
         List<string> SerializeLists(List<KeyValuePair<string, RedisValue[]>> items);
         

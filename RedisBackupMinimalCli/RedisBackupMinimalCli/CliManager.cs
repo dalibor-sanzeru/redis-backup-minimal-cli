@@ -12,6 +12,7 @@ namespace RedisBackupMinimalCli
             var (server, database) = CreateDatabaseConnection(options.Redis);
             var persistanceHandler = this.CreateCommandPersistanceHandler();
             var redisTypeSerializer = CreateRedisTypeSerializer();
+            var redisTypeDeserializer = CreateRedisTypeDeSerializer();
 
             switch (options.Operation)
             {
@@ -19,7 +20,7 @@ namespace RedisBackupMinimalCli
                     await new BackupCreator(server, database, redisTypeSerializer, persistanceHandler).Execute(options);
                     break;
                 case OperationType.Restore:
-                    await new RestoreCreator(server, database, persistanceHandler).Execute(options);
+                    await new RestoreCreator(server, database, redisTypeDeserializer, persistanceHandler).Execute(options);
                     break;
                 default:
                     throw new InvalidOperationException($"Operation {options.Operation} not yet supported.");
@@ -43,6 +44,11 @@ namespace RedisBackupMinimalCli
         protected virtual IRedisTypeSerializer CreateRedisTypeSerializer()
         {
             return new RedisTypeSerializer();
+        }
+
+        protected virtual IRedisTypeDeserializer CreateRedisTypeDeSerializer()
+        {
+            return null;
         }
     }
 }

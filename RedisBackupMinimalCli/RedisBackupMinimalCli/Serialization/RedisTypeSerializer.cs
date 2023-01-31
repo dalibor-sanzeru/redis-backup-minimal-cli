@@ -19,20 +19,19 @@ namespace RedisBackupMinimalCli.Serialization
 
             return result;
         }
+        public List<string> SerializeStrings(List<KeyValuePair<string, RedisValue>> items)
+        {
+            return this.Serialize(items, (item) =>
+            {
+                return new List<string>() { @$"SET ""{item.Key}"" ""{item.Value}""" };
+            });
+        }
 
         public List<string> SerializeHashSets(List<KeyValuePair<string, HashEntry[]>> items)
         {
             return this.Serialize(items, (item) =>
             {
                 return item.Value.Select(x => @$"HSET ""{item.Key}"" ""{x.Name}"" ""{x.Value}""").ToList();
-            });
-        }
-
-        public List<string> SerializeStrings(List<KeyValuePair<string, RedisValue>> items)
-        {
-            return this.Serialize(items, (item) =>
-            {
-                return new List<string>() { @$"SET ""{item.Key}"" ""{item.Value}""" };
             });
         }
 
