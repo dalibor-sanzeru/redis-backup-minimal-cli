@@ -11,6 +11,7 @@ namespace RedisBackupMinimalCli.Serialization
     public class RedisTypeDeserializer : IRedisTypeDeserializer
     {
         public const string KeyTypeString = "SET";
+        public const string HashTypeString = "HSET";
 
         public RedisType GetRedisType(string command)
         {
@@ -44,9 +45,21 @@ namespace RedisBackupMinimalCli.Serialization
         public KeyValuePair<string, RedisValue> DeSerializeString(string command)
         {
             string commandKeysAndValuesOnly = RemoveCommandString(command, KeyTypeString);
-            var (key, restOfCommand) = this.ExtractCommandFirstKey(commandKeysAndValuesOnly);
+            var (key, restOfCommand) = this.ExtractDelimited(commandKeysAndValuesOnly);
+            var (value, _) = this.ExtractDelimited(restOfCommand);
 
-            return new KeyValuePair<string, RedisValue>(key, restOfCommand);
+            return new KeyValuePair<string, RedisValue>(key, value);
+        }
+
+        public KeyValuePair<string, HashEntry> DeSerializeHash(string command)
+        {
+            string commandKeysAndValuesOnly = RemoveCommandString(command, HashTypeString);
+
+            var (key, commandLeft1) = ExtractDelimited(commandKeysAndValuesOnly);
+            var (subkey, commandLeft2) = ExtractDelimited(commandLeft1);
+            var (value, _) = ExtractDelimited(commandLeft2);
+
+            return new KeyValuePair<string, HashEntry>(key, new HashEntry(subkey, value));
         }
 
         private string RemoveCommandString(string command, string commandKey)
@@ -54,10 +67,12 @@ namespace RedisBackupMinimalCli.Serialization
             return command.Trim().Remove(0, commandKey.Length).Trim();
         }
 
-        private (string key, string restOfCommand) ExtractCommandFirstKey(string command)
+        private (string key, string restOfCommand) ExtractDelimited(string command)
         {
+            var commandTrimmed = command;
+
             int closeIndex = 0;
-            for (int i = 1; i < command.Length; i++)
+            for (int i = 1; i < commandTrimmed.Length; i++)
             {
                 if (command[i] == '\"')
                 {
@@ -66,12 +81,10 @@ namespace RedisBackupMinimalCli.Serialization
                 }
             }
 
-            string key = command.Substring(1, closeIndex - 1);
-            string value = command.Substring(closeIndex + 1).Trim();
+            string key = commandTrimmed.Substring(1, closeIndex - 1);
+            string restOfcommand = commandTrimmed.Substring(closeIndex + 1).Trim();
 
-            value = value.Remove(value.Length - 1).Remove(0, 1);
-
-            return (key, value);
+            return (key, restOfcommand);
         }
     }
 }

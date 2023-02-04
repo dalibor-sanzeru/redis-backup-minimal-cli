@@ -48,5 +48,18 @@ namespace RedisBackupMinimalCli.Tests
             res.Key.Should().Be("key");
             res.Value.Should().Be("value");
         }
+
+        [Theory]
+        [InlineData("  HSET    \"key\"    \"subkey\"     \"value\"     ")]
+        [InlineData("HSET \"key\" \"subkey\" \"value\"")]
+        public void RedisGetType_DeSerializeHash(string command)
+        {
+            var redisTypeSerializer = new RedisTypeDeserializer();
+            var res = redisTypeSerializer.DeSerializeHash(command);
+
+            res.Key.Should().Be("key");
+            res.Value.Name.Should().Be("subkey");
+            res.Value.Value.Should().Be("value");
+        }
     }
 }

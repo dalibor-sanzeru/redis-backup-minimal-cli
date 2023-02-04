@@ -12,5 +12,7 @@ namespace RedisBackupMinimalCli.Serialization
         RedisType GetRedisType(string command);
 
         KeyValuePair<string, RedisValue> DeSerializeString(string command);
+
+        KeyValuePair<string, HashEntry> DeSerializeHash(string command);
     }
 }
