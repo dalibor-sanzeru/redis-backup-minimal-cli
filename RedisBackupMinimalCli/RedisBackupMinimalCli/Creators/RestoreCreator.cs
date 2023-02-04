@@ -23,7 +23,9 @@ namespace RedisBackupMinimalCli.Creators
         public override async Task Execute(Options options)
         {
             var commands = await this.commandPersistanceHandler.LoadCommands(options.FileName);
+            var batch = database.CreateBatch();
 
+            List<(string command, string key, Task<bool>)> commandKeysMigrationResults = new();
             for (int i = 0; i < commands.Count; i++)
             {
                 string command = commands[i];
@@ -32,6 +34,8 @@ namespace RedisBackupMinimalCli.Creators
                 switch (commandType)
                 {
                     case RedisType.String:
+                        var resultKey = this.redisTypeDeSerializer.DeSerializeString(command);
+                        commandKeysMigrationResults.Add((RedisTypeDeserializer.KeyTypeString, resultKey.Key, this.database.SetAddAsync(resultKey.Key, resultKey.Value)));
                         break;
                     case RedisType.List:
                         break;
@@ -49,6 +53,8 @@ namespace RedisBackupMinimalCli.Creators
                         throw new InvalidOperationException($"Type {commandType} cannot be processed.");
                 }
             }
+
+            batch.Execute();
 
             throw new NotImplementedException();
         }
