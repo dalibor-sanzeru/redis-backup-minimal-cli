@@ -18,5 +18,9 @@ namespace RedisBackupMinimalCli.Serialization
         KeyValuePair<string, RedisValue> DeSerializeSet(string command);
 
         KeyValuePair<string, RedisValue> DeSerializeList(string command);
+
+        KeyValuePair<string, SortedSetEntry> DeSerializeSortedSet(string command);
+
+        KeyValuePair<string, StreamEntry> DeSerializeStream(string command);
     }
 }

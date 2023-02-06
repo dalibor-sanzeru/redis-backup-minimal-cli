@@ -85,5 +85,27 @@ namespace RedisBackupMinimalCli.Tests
             res.Key.Should().Be("key");
             res.Value.Should().Be("value");
         }
+
+        [Theory]
+        [InlineData("  ZADD    \"key\"    10     \"value\"     ")]
+        [InlineData("ZADD \"key\" 10 \"value\"")]
+        public void RedisGetType_DeSerializeSortedSet(string command)
+        {
+            var redisTypeSerializer = new RedisTypeDeserializer();
+            var res = redisTypeSerializer.DeSerializeSortedSet(command);
+
+            res.Key.Should().Be("key");
+            res.Value.Score.Should().Be(10);
+            res.Value.Element.Should().Be("value");
+        }
+
+        [Theory]
+        [InlineData("  XADD    \"key\"    \"Speed\"     \"10\"     ")]
+        [InlineData("XADD \"key\" \"Speed\" \"10\"")]
+        public void RedisGetType_DeSerializeStream(string command)
+        {
+            var redisTypeSerializer = new RedisTypeDeserializer();
+            Assert.Throws<NotImplementedException>(() => redisTypeSerializer.DeSerializeStream(command));
+        }
     }
 }

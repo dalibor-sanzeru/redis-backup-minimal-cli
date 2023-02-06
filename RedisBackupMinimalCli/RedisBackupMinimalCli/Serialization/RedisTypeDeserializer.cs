@@ -14,27 +14,29 @@ namespace RedisBackupMinimalCli.Serialization
         public const string HashTypeRedisCommand = "HSET";
         public const string SetTypeRedisCommand = "SADD";
         public const string ListTypeRedisCommand = "LPUSH";
+        public const string SortedSetRedisCommand = "ZADD";
+        public const string StreamRedisCommand = "XADD";
 
         private string RemoveCommandString(string command, string commandKey)
         {
             return command.Trim().Remove(0, commandKey.Length).Trim();
         }
 
-        private (string key, string restOfCommand) ExtractDelimited(string command)
+        private (string key, string restOfCommand) ExtractDelimited(string command, char delimiter = '\"', int startFrom = 1)
         {
             var commandTrimmed = command;
 
             int closeIndex = 0;
-            for (int i = 1; i < commandTrimmed.Length; i++)
+            for (int i = startFrom; i < commandTrimmed.Length; i++)
             {
-                if (command[i] == '\"')
+                if (command[i] == delimiter)
                 {
                     closeIndex = i;
                     break;
                 }
             }
 
-            string key = commandTrimmed.Substring(1, closeIndex - 1);
+            string key = commandTrimmed.Substring(startFrom, closeIndex - startFrom);
             string restOfcommand = commandTrimmed.Substring(closeIndex + 1).Trim();
 
             return (key, restOfcommand);
@@ -58,11 +60,11 @@ namespace RedisBackupMinimalCli.Serialization
                     return RedisType.Hash;
                 case SetTypeRedisCommand:
                     return RedisType.Set;
-                case "ZADD":
+                case SortedSetRedisCommand:
                     return RedisType.SortedSet;
                 case ListTypeRedisCommand:
                     return RedisType.List;
-                case "XADD":
+                case StreamRedisCommand:
                     return RedisType.Stream;
                 default:
                     return RedisType.Unknown;
@@ -107,6 +109,22 @@ namespace RedisBackupMinimalCli.Serialization
             var (value, _) = ExtractDelimited(commandLeft1);
 
             return new KeyValuePair<string, RedisValue>(key, value);
+        }
+
+        public KeyValuePair<string, SortedSetEntry> DeSerializeSortedSet(string command)
+        {
+            string commandKeysAndValuesOnly = RemoveCommandString(command, SortedSetRedisCommand);
+
+            var (key, commandLeft1) = ExtractDelimited(commandKeysAndValuesOnly);
+            var (score, commandLeft2) = ExtractDelimited(commandLeft1, ' ', 0);
+            var (value, _) = ExtractDelimited(commandLeft2);
+
+            return new KeyValuePair<string, SortedSetEntry>(key, new SortedSetEntry(value, double.Parse(score)));
+        }
+
+        public KeyValuePair<string, StreamEntry> DeSerializeStream(string command)
+        {
+            throw new NotImplementedException();
         }
     }
 }
