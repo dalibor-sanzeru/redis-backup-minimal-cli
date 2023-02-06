@@ -10,57 +10,10 @@ namespace RedisBackupMinimalCli.Serialization
 {
     public class RedisTypeDeserializer : IRedisTypeDeserializer
     {
-        public const string KeyTypeString = "SET";
-        public const string HashTypeString = "HSET";
-
-        public RedisType GetRedisType(string command)
-        {
-            int indexOfCommandSplitter = command.IndexOf(' ');
-
-            if (indexOfCommandSplitter < 0)
-            {
-                return RedisType.Unknown;
-            }
-            string commandRedis = command.Substring(0, indexOfCommandSplitter).ToUpper();
-
-            switch (commandRedis)
-            {
-                case KeyTypeString:
-                    return RedisType.String;
-                case "HSET":
-                    return RedisType.Hash;
-                case "SADD":
-                    return RedisType.Set;
-                case "ZADD":
-                    return RedisType.SortedSet;
-                case "LPUSH":
-                    return RedisType.List;
-                case "XADD":
-                    return RedisType.Stream;
-                default:
-                    return RedisType.Unknown;
-            }
-        }
-
-        public KeyValuePair<string, RedisValue> DeSerializeString(string command)
-        {
-            string commandKeysAndValuesOnly = RemoveCommandString(command, KeyTypeString);
-            var (key, restOfCommand) = this.ExtractDelimited(commandKeysAndValuesOnly);
-            var (value, _) = this.ExtractDelimited(restOfCommand);
-
-            return new KeyValuePair<string, RedisValue>(key, value);
-        }
-
-        public KeyValuePair<string, HashEntry> DeSerializeHash(string command)
-        {
-            string commandKeysAndValuesOnly = RemoveCommandString(command, HashTypeString);
-
-            var (key, commandLeft1) = ExtractDelimited(commandKeysAndValuesOnly);
-            var (subkey, commandLeft2) = ExtractDelimited(commandLeft1);
-            var (value, _) = ExtractDelimited(commandLeft2);
-
-            return new KeyValuePair<string, HashEntry>(key, new HashEntry(subkey, value));
-        }
+        public const string KeyTypeRedisCommand = "SET";
+        public const string HashTypeRedisCommand = "HSET";
+        public const string SetTypeRedisCommand = "SADD";
+        public const string ListTypeRedisCommand = "LPUSH";
 
         private string RemoveCommandString(string command, string commandKey)
         {
@@ -85,6 +38,75 @@ namespace RedisBackupMinimalCli.Serialization
             string restOfcommand = commandTrimmed.Substring(closeIndex + 1).Trim();
 
             return (key, restOfcommand);
+        }
+
+        public RedisType GetRedisType(string command)
+        {
+            int indexOfCommandSplitter = command.IndexOf(' ');
+
+            if (indexOfCommandSplitter < 0)
+            {
+                return RedisType.Unknown;
+            }
+            string commandRedis = command.Substring(0, indexOfCommandSplitter).ToUpper();
+
+            switch (commandRedis)
+            {
+                case KeyTypeRedisCommand:
+                    return RedisType.String;
+                case HashTypeRedisCommand:
+                    return RedisType.Hash;
+                case SetTypeRedisCommand:
+                    return RedisType.Set;
+                case "ZADD":
+                    return RedisType.SortedSet;
+                case ListTypeRedisCommand:
+                    return RedisType.List;
+                case "XADD":
+                    return RedisType.Stream;
+                default:
+                    return RedisType.Unknown;
+            }
+        }
+
+        public KeyValuePair<string, RedisValue> DeSerializeString(string command)
+        {
+            string commandKeysAndValuesOnly = RemoveCommandString(command, KeyTypeRedisCommand);
+            var (key, restOfCommand) = this.ExtractDelimited(commandKeysAndValuesOnly);
+            var (value, _) = this.ExtractDelimited(restOfCommand);
+
+            return new KeyValuePair<string, RedisValue>(key, value);
+        }
+
+        public KeyValuePair<string, HashEntry> DeSerializeHash(string command)
+        {
+            string commandKeysAndValuesOnly = RemoveCommandString(command, HashTypeRedisCommand);
+
+            var (key, commandLeft1) = ExtractDelimited(commandKeysAndValuesOnly);
+            var (subkey, commandLeft2) = ExtractDelimited(commandLeft1);
+            var (value, _) = ExtractDelimited(commandLeft2);
+
+            return new KeyValuePair<string, HashEntry>(key, new HashEntry(subkey, value));
+        }
+
+        public KeyValuePair<string, RedisValue> DeSerializeSet(string command)
+        {
+            string commandKeysAndValuesOnly = RemoveCommandString(command, SetTypeRedisCommand);
+
+            var (key, commandLeft1) = ExtractDelimited(commandKeysAndValuesOnly);
+            var (value, _) = ExtractDelimited(commandLeft1);
+
+            return new KeyValuePair<string, RedisValue>(key, value);
+        }
+
+        public KeyValuePair<string, RedisValue> DeSerializeList(string command)
+        {
+            string commandKeysAndValuesOnly = RemoveCommandString(command, ListTypeRedisCommand);
+
+            var (key, commandLeft1) = ExtractDelimited(commandKeysAndValuesOnly);
+            var (value, _) = ExtractDelimited(commandLeft1);
+
+            return new KeyValuePair<string, RedisValue>(key, value);
         }
     }
 }

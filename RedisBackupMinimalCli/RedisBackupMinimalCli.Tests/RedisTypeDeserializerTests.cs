@@ -61,5 +61,29 @@ namespace RedisBackupMinimalCli.Tests
             res.Value.Name.Should().Be("subkey");
             res.Value.Value.Should().Be("value");
         }
+
+        [Theory]
+        [InlineData("  SADD    \"key\"    \"value\" ")]
+        [InlineData("SADD \"key\" \"value\"")]
+        public void RedisGetType_DeSerializeSet(string command)
+        {
+            var redisTypeSerializer = new RedisTypeDeserializer();
+            var res = redisTypeSerializer.DeSerializeSet(command);
+
+            res.Key.Should().Be("key");
+            res.Value.Should().Be("value");
+        }
+
+        [Theory]
+        [InlineData("  LPUSH    \"key\"    \"value\" ")]
+        [InlineData("LPUSH \"key\" \"value\"")]
+        public void RedisGetType_DeSerializeList(string command)
+        {
+            var redisTypeSerializer = new RedisTypeDeserializer();
+            var res = redisTypeSerializer.DeSerializeList(command);
+
+            res.Key.Should().Be("key");
+            res.Value.Should().Be("value");
+        }
     }
 }
