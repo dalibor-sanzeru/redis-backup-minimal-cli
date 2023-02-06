@@ -20,12 +20,11 @@ namespace RedisBackupMinimalCli.PersistanceOperations
             return (await File.ReadAllLinesAsync(fileName)).ToList();
         }
 
-        public Task SaveCommands(string directory, string fileName, List<string> serializedCommads)
+        public Task SaveCommands(string fileName, List<string> serializedCommads)
         {
-            var defaultName = $"{DateTime.UtcNow.ToString("MMddyy_HHmmss")}.redis" ;
-            var path = Path.Combine(directory, $"{fileName ?? defaultName}");
+            var defaultName = $"{DateTime.UtcNow.ToString("MMddyy_HHmmss")}.{fileSuffix}";
 
-            return File.WriteAllLinesAsync(path, serializedCommads);
+            return File.WriteAllLinesAsync(string.IsNullOrWhiteSpace(fileName) ? defaultName: fileName, serializedCommads);
         }
     }
 }

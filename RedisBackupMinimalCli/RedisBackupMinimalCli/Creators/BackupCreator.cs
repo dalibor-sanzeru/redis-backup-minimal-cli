@@ -54,7 +54,7 @@ namespace RedisBackupMinimalCli.Creators
                         throw new InvalidOperationException($"Type {keysPerType.Type} cannot be processed.");
                 }
             }
-            await backupSaver.SaveCommands(options.Directory, options.FileName, serializedCommads);
+            await backupSaver.SaveCommands(options.FileName, serializedCommads);
         }
 
         private async Task<List<(RedisType Type, List<string> Keys)>> LoadKeysInBatchMode(IEnumerable<string> keyPatterns)

@@ -18,8 +18,7 @@ namespace RedisBackupMinimalCli.Tests
         {
             var opt = new Options()
             {
-                Directory = ".",
-                FileName = "backup.redis",
+                FileName = "./backup.redis",
                 Operation = OperationType.Backup,
                 Redis = "localhost:6379",
                 Keys = new List<string>
@@ -29,17 +28,18 @@ namespace RedisBackupMinimalCli.Tests
             var cli = new CliManager();
             await cli.Execute(opt);
 
-            string p = Path.Combine(opt.Directory, opt.FileName);
-            var savedResults = File.ReadAllLines(p);
+            var savedResults = File.ReadAllLines(opt.FileName);
             savedResults.Count().Should().Be(BackupCreatorTests.SourceTestData.Count(x => !x.StartsWith("XADD")));
         }
 
-        [Fact]
-        public async Task Stores_All_Supported_Types_WithGenerated_FileName()
+        [Theory]
+        [InlineData("")]
+        [InlineData(null)]
+        public async Task Stores_All_Supported_Types_WithGenerated_FileName(string emptyFilename)
         {
             var opt = new Options()
             {
-                Directory = ".",
+                FileName = emptyFilename,
                 Operation = OperationType.Backup,
                 Redis = "localhost:6379",
                 Keys = new List<string>
@@ -49,7 +49,7 @@ namespace RedisBackupMinimalCli.Tests
             var cli = new CliManager();
             await cli.Execute(opt);
 
-            var lastFileCreated = Directory.EnumerateFiles(opt.Directory, "*.redis")
+            var lastFileCreated = Directory.EnumerateFiles(".", "*.redis")
                 .Select(f => new { Filename = f, CreatedOn = File.GetCreationTimeUtc(f) }).OrderByDescending(x=>x.CreatedOn)
                 .First()
                 .Filename;

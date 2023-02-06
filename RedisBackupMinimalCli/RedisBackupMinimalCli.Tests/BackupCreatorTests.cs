@@ -40,7 +40,7 @@ namespace RedisBackupMinimalCli.Tests
         {
             var opt = new Options()
             {
-                Directory = ".",
+                FileName = "./backup.redis",
                 Operation = OperationType.Backup,
                 Redis = "localhost:6379",
                 Keys = new List<string>
@@ -52,7 +52,7 @@ namespace RedisBackupMinimalCli.Tests
 
             var bm = CreateBackupCreator(redis.GetServer(opt.Redis), redis.GetDatabase(), new RedisTypeSerializer(), bs.Object);
             await bm.Execute(opt);
-            bs.Verify(x => x.SaveCommands(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count >= 2)), Times.Exactly(1));
+            bs.Verify(x => x.SaveCommands(It.Is<string>(x => x == opt.FileName), It.Is<List<string>>(x => x.Count >= 2)), Times.Exactly(1));
         }
 
         [Fact]
@@ -60,7 +60,7 @@ namespace RedisBackupMinimalCli.Tests
         {
             var opt = new Options()
             {
-                Directory = ".",
+                FileName = "./backup.redis",
                 Operation = OperationType.Backup,
                 Redis = "localhost:6379",
                 Keys = new List<string>
@@ -73,7 +73,7 @@ namespace RedisBackupMinimalCli.Tests
             var bm = CreateBackupCreator(redis.GetServer(opt.Redis), redis.GetDatabase(), new RedisTypeSerializer(), bs.Object);
             await bm.Execute(opt);
 
-            bs.Verify(x => x.SaveCommands(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count == 4)), Times.Once());
+            bs.Verify(x => x.SaveCommands(It.Is<string>(x => x == opt.FileName), It.Is<List<string>>(x => x.Count == 4)), Times.Once());
         }
 
         [Fact]
@@ -81,7 +81,7 @@ namespace RedisBackupMinimalCli.Tests
         {
             var opt = new Options()
             {
-                Directory = ".",
+                FileName = "./backup.redis",
                 Operation = OperationType.Backup,
                 Redis = "localhost:6379",
                 Keys = new List<string>
@@ -94,7 +94,7 @@ namespace RedisBackupMinimalCli.Tests
             var bm = CreateBackupCreator(redis.GetServer(opt.Redis), redis.GetDatabase(), new RedisTypeSerializer(), bs.Object);
             await bm.Execute(opt);
 
-            bs.Verify(x => x.SaveCommands(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count == 2)), Times.Once());
+            bs.Verify(x => x.SaveCommands(It.Is<string>(x => x == opt.FileName), It.Is<List<string>>(x => x.Count == 2)), Times.Once());
         }
 
         [Fact]
@@ -102,7 +102,7 @@ namespace RedisBackupMinimalCli.Tests
         {
             var opt = new Options()
             {
-                Directory = ".",
+                FileName = "./backup.redis",
                 Operation = OperationType.Backup,
                 Redis = "localhost:6379",
                 Keys = new List<string>
@@ -115,7 +115,7 @@ namespace RedisBackupMinimalCli.Tests
             var bm = CreateBackupCreator(redis.GetServer(opt.Redis), redis.GetDatabase(), new RedisTypeSerializer(), bs.Object);
             await bm.Execute(opt);
 
-            bs.Verify(x => x.SaveCommands(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count == 4)), Times.Once());
+            bs.Verify(x => x.SaveCommands(It.Is<string>(x => x == opt.FileName), It.Is<List<string>>(x => x.Count == 4)), Times.Once());
         }
 
         [Fact]
@@ -123,7 +123,7 @@ namespace RedisBackupMinimalCli.Tests
         {
             var opt = new Options()
             {
-                Directory = ".",
+                FileName = "./backup.redis",
                 Operation = OperationType.Backup,
                 Redis = "localhost:6379",
                 Keys = new List<string>
@@ -136,7 +136,7 @@ namespace RedisBackupMinimalCli.Tests
             var bm = CreateBackupCreator(redis.GetServer(opt.Redis), redis.GetDatabase(), new RedisTypeSerializer(), bs.Object);
             await bm.Execute(opt);
 
-            bs.Verify(x => x.SaveCommands(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count == 4)), Times.Once());
+            bs.Verify(x => x.SaveCommands(It.Is<string>(x => x == opt.FileName), It.Is<List<string>>(x => x.Count == 4)), Times.Once());
         }
 
         [Fact(Skip = "Streams are not supported yet. Problem with local running stream commands on redis.")]
@@ -145,7 +145,7 @@ namespace RedisBackupMinimalCli.Tests
         {
             var opt = new Options()
             {
-                Directory = ".",
+                FileName = "./backup.redis",
                 Operation = OperationType.Backup,
                 Redis = "localhost:6379",
                 Keys = new List<string>
@@ -158,7 +158,7 @@ namespace RedisBackupMinimalCli.Tests
             var bm = CreateBackupCreator(redis.GetServer(opt.Redis), redis.GetDatabase(), new RedisTypeSerializer(), bs.Object);
             await bm.Execute(opt);
 
-            bs.Verify(x => x.SaveCommands(It.Is<string>(x => x == opt.Directory), It.IsAny<string>(), It.Is<List<string>>(x => x.Count == 2)), Times.Once());
+            bs.Verify(x => x.SaveCommands(It.Is<string>(x => x == opt.FileName), It.Is<List<string>>(x => x.Count == 2)), Times.Once());
         }
     }
 }
