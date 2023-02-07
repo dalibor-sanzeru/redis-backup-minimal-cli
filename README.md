@@ -2,6 +2,8 @@
 
 # redis-backup-minimal-cli
 Redis backup minimal CLI is single Use-Case tool to backup/restore redis database.
+Backup/Restore format is compatible with [Redis-Commander(https://github.com/joeferner/redis-commander)] Redis format format.
+It's fully client CLI tool, so you don't need any installation on server computer.
 
 
 ## How to get it (Use one of them):
@@ -10,14 +12,15 @@ Redis backup minimal CLI is single Use-Case tool to backup/restore redis databas
 ```
 dotnet tool install -g redis-backup-minimal-cli
 ```
+3. Download the source and build it yourself using dotnet.
 
 ## 2. Take Backup:
 ```
-redis-backup-minimal-cli --operation backup --directory C:\\MyFolder\ --redis http://redis-backup-connection-url --keys firstkey:* secondKey:* 
+redis-backup-minimal-cli --operation backup --fileName C:\\MyFolder\ --redis http://redis-backup-connection-url --keys firstkey:* secondKey:* 
 ```
 
 ## 3. Restore backup: 
 
 ```
-redis-backup-minimal-cli --operation restore --directory C:\\MyFolder\ --redis http://redis-restore-connection-url --keys firstkey:* secondKey:* 
+redis-backup-minimal-cli --operation restore --fileName C:\\MyFolder\ --redis http://redis-restore-connection-url --keys firstkey:* secondKey:* 
 ```
