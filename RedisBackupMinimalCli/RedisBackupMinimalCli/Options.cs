@@ -10,7 +10,7 @@ namespace RedisBackupMinimalCli
         [Option("redis", Required = true, HelpText = "Redis connection string.")]
         public string Redis { get; set; }
 
-        [Option("directory", Required = true, HelpText = "File where backup/restore files are being stored.")]
+        [Option("fileName", Required = true, HelpText = "File where backup/restore files are being stored.")]
         public string FileName { get; set; }
 
         [Option("keys", Required = false, HelpText = "Keys to backup.")]
