@@ -2,7 +2,7 @@
 
 # redis-backup-minimal-cli
 Redis backup minimal CLI is single Use-Case tool to backup/restore redis database.
-Backup/Restore format is compatible with [Redis-Commander(https://joeferner.github.io/redis-commander/)] Redis format format.
+Backup/Restore format is compatible with [Redis-Commander(https://github.com/joeferner/redis-commander)] Redis format format.
 It's fully client CLI tool, so you don't need any installation on server computer.
 
 
