@@ -25,27 +25,27 @@ namespace RedisBackupMinimalCli.Creators
                 switch (keysPerType.Type)
                 {
                     case RedisType.String:
-                        var stringResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.StringGetAsync(individualKey));
+                        var stringResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.StringGetAsync(individualKey), options.BatchSize);
                         serializedCommads.AddRange(this.redisTypeSerializer.SerializeStrings(stringResults));
                         break;
                     case RedisType.List:
-                        var listResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.ListRangeAsync(individualKey));
+                        var listResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.ListRangeAsync(individualKey), options.BatchSize);
                         serializedCommads.AddRange(this.redisTypeSerializer.SerializeLists(listResults));
                         break;
                     case RedisType.Set:
-                        var setResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.SetMembersAsync(individualKey));
+                        var setResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.SetMembersAsync(individualKey), options.BatchSize);
                         serializedCommads.AddRange(this.redisTypeSerializer.SerializeSets(setResults));
                         break;
                     case RedisType.SortedSet:
-                        var sortedSetResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.SortedSetRangeByRankWithScoresAsync(individualKey));
+                        var sortedSetResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.SortedSetRangeByRankWithScoresAsync(individualKey), options.BatchSize);
                         serializedCommads.AddRange(this.redisTypeSerializer.SerializeSortedSets(sortedSetResults));
                         break;
                     case RedisType.Hash:
-                        var hashResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.HashGetAllAsync(individualKey));
+                        var hashResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.HashGetAllAsync(individualKey), options.BatchSize);
                         serializedCommads.AddRange(this.redisTypeSerializer.SerializeHashSets(hashResults));
                         break;
                     case RedisType.Stream:
-                        var streamResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.StreamRangeAsync(individualKey));
+                        var streamResults = await LoadAndExtract(keysPerType.Keys, (batch, individualKey) => batch.StreamRangeAsync(individualKey), options.BatchSize);
                         serializedCommads.AddRange(this.redisTypeSerializer.SerializeStreams(streamResults));
                         break;
                     case RedisType.None:
@@ -73,15 +73,29 @@ namespace RedisBackupMinimalCli.Creators
             return redisTypeKeys;
         }
 
-        private async Task<List<KeyValuePair<string, T>>> LoadAndExtract<T>(List<string> keysPerType, Func<IBatch, string, Task<T>> dbExtractor)
+        private async Task<List<KeyValuePair<string, T>>> LoadAndExtract<T>(List<string> keysPerType, Func<IBatch, string, Task<T>> dbExtractor, int batchSize)
         {
-            var batch = database.CreateBatch();
-            var results = keysPerType.Select(individualKey => new KeyValuePair<string, Task<T>>(individualKey, dbExtractor(batch, individualKey))).ToList();
-            batch.Execute();
+            int numberOfBatches = (int)Math.Ceiling((decimal)keysPerType.Count / batchSize);
+            var resultFinal = new List<KeyValuePair<string, T>>();
 
-            await Task.WhenAll(results.Select(x => x.Value));
+            for (int i = 0; i < numberOfBatches; i++)
+            {
+                var batch = database.CreateBatch();
 
-            return results.Select(x => new KeyValuePair<string, T>(x.Key, x.Value.Result)).ToList();
+                int startIndex = i * batchSize;
+                int expectedEndIndex = startIndex + batchSize;
+                int countToTake = expectedEndIndex > keysPerType.Count ? keysPerType.Count - startIndex : expectedEndIndex - startIndex;
+
+                var batchKeysPerType = keysPerType.GetRange(startIndex, countToTake);
+                var results = batchKeysPerType.Select(individualKey => new KeyValuePair<string, Task<T>>(individualKey, dbExtractor(batch, individualKey))).ToList();
+                batch.Execute();
+
+                await Task.WhenAll(results.Select(x => x.Value).ToList());
+
+                resultFinal.AddRange(results.Select(x => new KeyValuePair<string, T>(x.Key, x.Value.Result)).ToList());
+            }
+
+            return resultFinal;
         }
     }
 }
