@@ -25,7 +25,7 @@ namespace RedisBackupMinimalCli.Creators
             var commands = await this.commandPersistanceHandler.LoadCommands(options.FileName);
             var batch = database.CreateBatch();
 
-            List<(string command, string key, Task<bool>)> commandKeysMigrationResults = new();
+            List<(string command, string key, Task<bool> dbOperation)> commandKeysMigrationResults = new();
             for (int i = 0; i < commands.Count; i++)
             {
                 string command = commands[i];
@@ -38,14 +38,24 @@ namespace RedisBackupMinimalCli.Creators
                         commandKeysMigrationResults.Add((RedisTypeDeserializer.KeyTypeRedisCommand, resultKey.Key, this.database.SetAddAsync(resultKey.Key, resultKey.Value)));
                         break;
                     case RedisType.List:
+                        var resultList = this.redisTypeDeSerializer.DeSerializeList(command);
+                        commandKeysMigrationResults.Add((RedisTypeDeserializer.ListTypeRedisCommand, resultList.Key, this.database.ListRightPushAsync(resultList.Key, resultList.Value).ContinueWith(res => res.Result > 0)));
                         break;
                     case RedisType.Set:
+                        var resultSet = this.redisTypeDeSerializer.DeSerializeSet(command);
+                        commandKeysMigrationResults.Add((RedisTypeDeserializer.SetTypeRedisCommand, resultSet.Key, this.database.SetAddAsync(resultSet.Key, resultSet.Value)));
                         break;
                     case RedisType.SortedSet:
+                        var resultSortedSet = this.redisTypeDeSerializer.DeSerializeSortedSet(command);
+                        commandKeysMigrationResults.Add((RedisTypeDeserializer.SortedSetRedisCommand, resultSortedSet.Key, this.database.SortedSetAddAsync(resultSortedSet.Key, resultSortedSet.Value.Element, resultSortedSet.Value.Score)));
                         break;
                     case RedisType.Hash:
+                        var resultHash = this.redisTypeDeSerializer.DeSerializeHash(command);
+                        commandKeysMigrationResults.Add((RedisTypeDeserializer.HashTypeRedisCommand, resultHash.Key, this.database.HashSetAsync(resultHash.Key, resultHash.Value.Name, resultHash.Value.Value)));
                         break;
                     case RedisType.Stream:
+                        //var resultStream = this.redisTypeDeSerializer.DeSerializeStream(command);
+                        //commandKeysMigrationResults.Add((RedisTypeDeserializer.HashTypeRedisCommand, resultStream.Key, this.database.StreamAddAsync(resultStream.Key, resultStream.Value.Values)));
                         break;
                     case RedisType.None:
                     case RedisType.Unknown:
@@ -55,8 +65,7 @@ namespace RedisBackupMinimalCli.Creators
             }
 
             batch.Execute();
-
-            throw new NotImplementedException();
+            await Task.WhenAll(commandKeysMigrationResults.Select(x => x.dbOperation).ToList());
         }
     }
 }

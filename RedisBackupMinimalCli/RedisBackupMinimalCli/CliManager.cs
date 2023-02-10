@@ -30,7 +30,8 @@ namespace RedisBackupMinimalCli
         protected virtual (IServer server, IDatabase database) CreateDatabaseConnection(string redisConnection)
         {
             ConnectionMultiplexer client = ConnectionMultiplexer.Connect(redisConnection);
-            var server = client.GetServer(redisConnection);
+            string hostAndPort = redisConnection.Split(',')[0];
+            var server = client.GetServer(hostAndPort);
             var database = client.GetDatabase();
 
             return (server, database);
@@ -48,7 +49,7 @@ namespace RedisBackupMinimalCli
 
         protected virtual IRedisTypeDeserializer CreateRedisTypeDeSerializer()
         {
-            return null;
+            return new RedisTypeDeserializer();
         }
     }
 }

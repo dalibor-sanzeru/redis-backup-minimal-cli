@@ -10,12 +10,7 @@ namespace RedisBackupMinimalCli.Tests
 {
     public class BackupCreatorTests
     {
-        public static List<string> SourceTestData { get; private set; }
-
-        static BackupCreatorTests()
-        {
-            SourceTestData = File.ReadAllLines("redis-test-data.txt").ToList();
-        }
+        public static List<string> SourceTestData { get; private set; } = File.ReadAllLines("redis-test-data.txt").ToList();
 
         private static BackupCreator CreateBackupCreator(IServer server = null, IDatabase database = null, IRedisTypeSerializer rts = null, ICommandPersistanceHandler bs = null)
         {
