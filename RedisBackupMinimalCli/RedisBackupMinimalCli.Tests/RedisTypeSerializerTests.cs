@@ -94,9 +94,8 @@ namespace RedisBackupMinimalCli.Tests
             };
 
             var res = redisTypeSerializer.SerializeLists(val);
-            res[0].Should().Be(@"LPUSH ""key1"" ""1""");
-            res[1].Should().Be(@"LPUSH ""key1"" ""2""");
-            res.Count.Should().Be(2);
+            res[0].Should().Be(@"LPUSH ""key1"" ""1"" ""2""");
+            res.Count.Should().Be(1, "Because multiple items in list should be serialized in single command.");
         }
 
         [Fact]

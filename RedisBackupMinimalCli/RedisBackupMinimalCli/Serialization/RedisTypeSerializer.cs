@@ -9,7 +9,7 @@ namespace RedisBackupMinimalCli.Serialization
 {
     public class RedisTypeSerializer : IRedisTypeSerializer
     {
-        private List<string> Serialize<ItemsType>(List<KeyValuePair<string, ItemsType>> items, Func<KeyValuePair<string, ItemsType>, List<string>> converter)
+        private List<string> SerializeItems<ItemsType>(List<KeyValuePair<string, ItemsType>> items, Func<KeyValuePair<string, ItemsType>, List<string>> converter)
         {
             List<string> result = new();
             for (int i = 0; i < items.Count; i++)
@@ -21,7 +21,7 @@ namespace RedisBackupMinimalCli.Serialization
         }
         public List<string> SerializeStrings(List<KeyValuePair<string, RedisValue>> items)
         {
-            return this.Serialize(items, (item) =>
+            return this.SerializeItems(items, (item) =>
             {
                 return new List<string>() { @$"SET ""{item.Key}"" ""{item.Value}""" };
             });
@@ -29,7 +29,7 @@ namespace RedisBackupMinimalCli.Serialization
 
         public List<string> SerializeHashSets(List<KeyValuePair<string, HashEntry[]>> items)
         {
-            return this.Serialize(items, (item) =>
+            return this.SerializeItems(items, (item) =>
             {
                 return item.Value.Select(x => @$"HSET ""{item.Key}"" ""{x.Name}"" ""{x.Value}""").ToList();
             });
@@ -37,15 +37,15 @@ namespace RedisBackupMinimalCli.Serialization
 
         public List<string> SerializeLists(List<KeyValuePair<string, RedisValue[]>> items)
         {
-            return this.Serialize(items, (item) =>
+            return this.SerializeItems(items, (item) =>
             {
-                return item.Value.Select(x => @$"LPUSH ""{item.Key}"" ""{x}""").ToList();
+                return new() { @$"LPUSH ""{item.Key}"" {string.Join(" ", item.Value.Select(x => @$"""{x}""").ToList())}" };
             });
         }
 
         public List<string> SerializeSets(List<KeyValuePair<string, RedisValue[]>> items)
         {
-            return this.Serialize(items, (item) =>
+            return this.SerializeItems(items, (item) =>
             {
                 return item.Value.Select(x => @$"SADD ""{item.Key}"" ""{x}""").ToList();
             });
@@ -53,7 +53,7 @@ namespace RedisBackupMinimalCli.Serialization
 
         public List<string> SerializeSortedSets(List<KeyValuePair<string, SortedSetEntry[]>> items)
         {
-            return this.Serialize(items, (item) =>
+            return this.SerializeItems(items, (item) =>
             {
                 return item.Value.Select(x => @$"ZADD ""{item.Key}"" {x.Score} ""{x.Element}""").ToList();
             });

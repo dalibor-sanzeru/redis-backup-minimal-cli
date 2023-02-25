@@ -22,7 +22,7 @@ namespace RedisBackupMinimalCli.Tests
         [InlineData("set smallcaps", RedisType.String)]
         [InlineData("SET xyz", RedisType.String)]
         [InlineData("HSET xyz", RedisType.Hash)]
-        [InlineData("LPUSH xyz", RedisType.List)]
+        [InlineData("RPUSH xyz", RedisType.List)]
         [InlineData("SADD xyz", RedisType.Set)]
         [InlineData("ZADD xyz", RedisType.SortedSet)]
         [InlineData("XADD xyz", RedisType.Stream)]
@@ -75,15 +75,42 @@ namespace RedisBackupMinimalCli.Tests
         }
 
         [Theory]
-        [InlineData("  LPUSH    \"key\"    \"value\" ")]
-        [InlineData("LPUSH \"key\" \"value\"")]
-        public void RedisGetType_DeSerializeList(string command)
+        [InlineData("  RPUSH    \"key\"    \"value1\"")]
+        [InlineData("RPUSH \"key\" \"value1\" ")]
+        public void RedisGetType_DeSerializeList_OneItem(string command)
         {
             var redisTypeSerializer = new RedisTypeDeserializer();
             var res = redisTypeSerializer.DeSerializeList(command);
 
             res.Key.Should().Be("key");
-            res.Value.Should().Be("value");
+            res.Value[0].Should().Be("value1");
+        }
+
+        [Theory]
+        [InlineData("  RPUSH    \"key\"    \"value1\"     \"value2\"")]
+        [InlineData("RPUSH \"key\" \"value1\" \"value2\"")]
+        public void RedisGetType_DeSerializeList_MultipleItems(string command)
+        {
+            var redisTypeSerializer = new RedisTypeDeserializer();
+            var res = redisTypeSerializer.DeSerializeList(command);
+
+            res.Key.Should().Be("key");
+            res.Value[0].Should().Be("value1");
+            res.Value[1].Should().Be("value2");
+        }
+
+        [Theory]
+        [InlineData("  RPUSH \"key\"    \"{\"Name\":\"Alfa\"}\"     \"{\"Name\":\"Beta\"}\"     \"{\"Name\":\"Gama\"}\"")]
+        [InlineData("RPUSH \"key\" \"{\"Name\":\"Alfa\"}\" \"{\"Name\":\"Beta\"}\" \"{\"Name\":\"Gama\"}\"")]
+        public void RedisGetType_DeSerializeList_MUltipleJsons(string command)
+        {
+            var redisTypeSerializer = new RedisTypeDeserializer();
+            var res = redisTypeSerializer.DeSerializeList(command);
+
+            res.Key.Should().Be("key");
+            res.Value[0].Should().Be(@"{""Name"":""Alfa""}");
+            res.Value[1].Should().Be(@"{""Name"":""Beta""}");
+            res.Value[2].Should().Be(@"{""Name"":""Gama""}");
         }
 
         [Theory]

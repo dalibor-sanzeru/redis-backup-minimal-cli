@@ -35,7 +35,7 @@ namespace RedisBackupMinimalCli.Creators
                 {
                     case RedisType.String:
                         var resultKey = this.redisTypeDeSerializer.DeSerializeString(command);
-                        commandKeysMigrationResults.Add((RedisTypeDeserializer.KeyTypeRedisCommand, resultKey.Key, this.database.SetAddAsync(resultKey.Key, resultKey.Value)));
+                        commandKeysMigrationResults.Add((RedisTypeDeserializer.KeyTypeRedisCommand, resultKey.Key, this.database.StringSetAsync(resultKey.Key, resultKey.Value)));
                         break;
                     case RedisType.List:
                         var resultList = this.redisTypeDeSerializer.DeSerializeList(command);

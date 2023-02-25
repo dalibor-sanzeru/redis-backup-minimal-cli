@@ -50,12 +50,29 @@ namespace RedisBackupMinimalCli.Tests
             await cli.Execute(opt);
 
             var lastFileCreated = Directory.EnumerateFiles(".", "*.redis")
-                .Select(f => new { Filename = f, CreatedOn = File.GetCreationTimeUtc(f) }).OrderByDescending(x=>x.CreatedOn)
+                .Select(f => new { Filename = f, CreatedOn = File.GetCreationTimeUtc(f) }).OrderByDescending(x => x.CreatedOn)
                 .First()
                 .Filename;
 
             var savedResults = File.ReadAllLines(lastFileCreated);
             savedResults.Count().Should().Be(BackupCreatorTests.SourceTestData.Count(x => !x.StartsWith("XADD")));
+        }
+
+        [Fact]
+        public async Task Restore_All_Supported_Types_WithUser_FileName()
+        {
+            var opt = new Options()
+            {
+                FileName = "./redis-test-data.txt",
+                Operation = OperationType.Restore,
+                Redis = "localhost:6379"
+            };
+
+            var cli = new CliManager();
+            await cli.Execute(opt);
+
+            //var savedResults = File.ReadAllLines(opt.FileName);
+            //savedResults.Count().Should().Be(BackupCreatorTests.SourceTestData.Count(x => !x.StartsWith("XADD")));
         }
     }
 }

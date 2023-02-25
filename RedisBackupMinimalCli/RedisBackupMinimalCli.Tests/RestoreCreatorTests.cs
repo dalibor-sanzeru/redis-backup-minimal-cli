@@ -25,7 +25,6 @@ namespace RedisBackupMinimalCli.Tests
             return rc;
         }
 
-
         [Fact]
         public void Ctor()
         {
@@ -60,7 +59,6 @@ namespace RedisBackupMinimalCli.Tests
             db.Verify(x => x.CreateBatch(null));
             batch.Verify(x => x.Execute(), Times.Once);
         }
-
 
         [Fact]
         public async Task ReStore_All_Hashes()
