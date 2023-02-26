@@ -55,7 +55,7 @@ namespace RedisBackupMinimalCli.Tests
             var rc = new RestoreCreator(server.Object, db.Object, new RedisTypeDeserializer(), bs.Object);
             await rc.Execute(opt);
 
-            db.Verify(x => x.SetAddAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), CommandFlags.None), Times.Exactly(2));
+            db.Verify(x => x.StringSetAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), null, false, When.Always, CommandFlags.None), Times.Exactly(2));
             db.Verify(x => x.CreateBatch(null));
             batch.Verify(x => x.Execute(), Times.Once);
         }
@@ -111,7 +111,7 @@ namespace RedisBackupMinimalCli.Tests
             var rc = new RestoreCreator(server.Object, db.Object, new RedisTypeDeserializer(), bs.Object);
             await rc.Execute(opt);
 
-            db.Verify(x => x.ListRightPushAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), When.Always, CommandFlags.None), Times.Exactly(4));
+            db.Verify(x => x.ListRightPushAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue[]>(), When.Always, CommandFlags.None), Times.Exactly(2));
             db.Verify(x => x.CreateBatch(null));
             batch.Verify(x => x.Execute(), Times.Once);
         }
